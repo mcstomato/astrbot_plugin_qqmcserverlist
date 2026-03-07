@@ -8,8 +8,6 @@ import json
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
-        self.register_states = {}  # 存储用户注册状态: {user_id: {"state": "waiting_ip"|"waiting_port", "ip": ""}}
-        self.user_configs = {}  # 存储用户配置: {user_id: {"ip": "", "port": ""}}
 
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
@@ -26,43 +24,41 @@ class MyPlugin(Star):
     @filter.command("register")
     async def register_server(self, event: AstrMessageEvent):
         """注册服务器配置"""
-        user_id = event.get_sender_id()
-        self.register_states[user_id] = {"state": "waiting_ip", "ip": ""}
+        session_id = event.get_session_id()
+        await self.context.set_session_data(session_id, "register_state", "waiting_ip")
         yield event.plain_result("请输入ip地址：")
 
     @filter.command("query")
     async def query_config(self, event: AstrMessageEvent):
         """查询已配置的API链接"""
-        user_id = event.get_sender_id()
-        if user_id in self.user_configs:
-            ip = self.user_configs[user_id]["ip"]
-            port = self.user_configs[user_id]["port"]
+        session_id = event.get_session_id()
+        config = await self.context.get_session_data(session_id, "mc_server_config")
+        if config:
+            ip = config.get("ip")
+            port = config.get("port")
             api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
             yield event.plain_result(f"API链接为：\n{api_url}")
         else:
             yield event.plain_result("无")
 
-    @filter.on_message
-    async def handle_message(self, event: AstrMessageEvent):
-        """处理普通消息，用于接收注册流程中的输入"""
-        user_id = event.get_sender_id()
-        message_str = event.message_str.strip()
+    @filter.command("input")
+    async def handle_input(self, event: AstrMessageEvent, content: str):
+        """处理注册流程中的输入"""
+        session_id = event.get_session_id()
+        register_state = await self.context.get_session_data(session_id, "register_state")
 
-        if user_id in self.register_states:
-            state = self.register_states[user_id]["state"]
+        if register_state == "waiting_ip":
+            await self.context.set_session_data(session_id, "temp_ip", content)
+            await self.context.set_session_data(session_id, "register_state", "waiting_port")
+            yield event.plain_result("请输入端口号：")
 
-            if state == "waiting_ip":
-                self.register_states[user_id]["ip"] = message_str
-                self.register_states[user_id]["state"] = "waiting_port"
-                yield event.plain_result("请输入端口号：")
-
-            elif state == "waiting_port":
-                ip = self.register_states[user_id]["ip"]
-                port = message_str
-                api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
-                self.user_configs[user_id] = {"ip": ip, "port": port}
-                yield event.plain_result(f"配置完成，API链接为：\n{api_url}")
-                del self.register_states[user_id]
+        elif register_state == "waiting_port":
+            ip = await self.context.get_session_data(session_id, "temp_ip")
+            port = content
+            api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
+            await self.context.set_session_data(session_id, "mc_server_config", {"ip": ip, "port": port})
+            await self.context.set_session_data(session_id, "register_state", None)
+            yield event.plain_result(f"配置完成，API链接为：\n{api_url}")
 
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
