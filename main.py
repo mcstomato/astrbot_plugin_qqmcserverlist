@@ -16,11 +16,17 @@ class MyPlugin(Star):
     @filter.command("list")
     async def helloworld(self, event: AstrMessageEvent):
         """这是一个 list 指令"""
-        user_name = event.get_sender_name()
-        message_str = event.message_str
-        message_chain = event.get_messages()
-        logger.info(message_chain)
-        yield event.plain_result(f"Hello, {user_name}, 你发了 {message_str}!")
+        session_id = event.get_session_id()
+        
+        if session_id not in self.user_configs:
+            yield event.plain_result("请先获取ip端口")
+            return
+        
+        ip = self.user_configs[session_id]["ip"]
+        port = self.user_configs[session_id]["port"]
+        api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
+        
+        yield event.plain_result(f"API链接为：\n{api_url}")
 
     @filter.command("register")
     async def register_server(self, event: AstrMessageEvent, server_info: str):
