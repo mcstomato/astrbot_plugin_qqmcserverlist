@@ -8,6 +8,7 @@ import json
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
+        self.user_configs = {}
 
     async def initialize(self):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
@@ -22,43 +23,40 @@ class MyPlugin(Star):
         yield event.plain_result(f"Hello, {user_name}, 你发了 {message_str}!")
 
     @filter.command("register")
-    async def register_server(self, event: AstrMessageEvent):
-        """注册服务器配置"""
-        session_id = event.get_session_id()
-        await self.context.set_session_data(session_id, "register_state", "waiting_ip")
-        yield event.plain_result("请输入ip地址：")
+    async def register_server(self, event: AstrMessageEvent, server_info: str):
+        """注册服务器配置，格式：/register [ip]:[端口]"""
+        user_id = event.get_sender_id()
+        
+        if ":" not in server_info:
+            yield event.plain_result("格式错误！请使用：/register [ip]:[端口]")
+            return
+        
+        try:
+            ip, port = server_info.split(":", 1)
+            ip = ip.strip()
+            port = port.strip()
+            
+            if not ip or not port:
+                yield event.plain_result("格式错误！IP地址和端口不能为空")
+                return
+            
+            api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
+            self.user_configs[user_id] = {"ip": ip, "port": port}
+            yield event.plain_result(f"配置完成，API链接为：\n{api_url}")
+        except Exception as e:
+            yield event.plain_result(f"配置失败：{str(e)}")
 
     @filter.command("query")
     async def query_config(self, event: AstrMessageEvent):
         """查询已配置的API链接"""
-        session_id = event.get_session_id()
-        config = await self.context.get_session_data(session_id, "mc_server_config")
-        if config:
-            ip = config.get("ip")
-            port = config.get("port")
+        user_id = event.get_sender_id()
+        if user_id in self.user_configs:
+            ip = self.user_configs[user_id]["ip"]
+            port = self.user_configs[user_id]["port"]
             api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
             yield event.plain_result(f"API链接为：\n{api_url}")
         else:
             yield event.plain_result("无")
-
-    @filter.command("input")
-    async def handle_input(self, event: AstrMessageEvent, content: str):
-        """处理注册流程中的输入"""
-        session_id = event.get_session_id()
-        register_state = await self.context.get_session_data(session_id, "register_state")
-
-        if register_state == "waiting_ip":
-            await self.context.set_session_data(session_id, "temp_ip", content)
-            await self.context.set_session_data(session_id, "register_state", "waiting_port")
-            yield event.plain_result("请输入端口号：")
-
-        elif register_state == "waiting_port":
-            ip = await self.context.get_session_data(session_id, "temp_ip")
-            port = content
-            api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
-            await self.context.set_session_data(session_id, "mc_server_config", {"ip": ip, "port": port})
-            await self.context.set_session_data(session_id, "register_state", None)
-            yield event.plain_result(f"配置完成，API链接为：\n{api_url}")
 
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
