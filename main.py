@@ -62,7 +62,7 @@ class MyPlugin(Star):
             Comp.Plain(f"motd:{api['data']['motd']}"),
             Comp.Plain(f"玩家人数:{api['data']['p']}\{api['data']['mp']}"),
             Comp.Plain(f"今日查询最高在线:{api['data']['today_max']}"),
-            Comp.Plain(f"今日查询最低在线:{api['data']['today_mix']}"),
+            Comp.Plain(f"今日查询最低在线:{api['data']['today_min']}"),
             Comp.Plain(f"历史查询最高在线:{api['data']['history_max']}"),
             Comp.Plain(f"总查询次数:{api['data']['total_queries']}"),
             Comp.Plain(f"网络延迟:{api['data']['ping']}")
