@@ -24,10 +24,10 @@ class MyPlugin(Star):
         
         ip = self.user_configs[session_id]["ip"]
         port = self.user_configs[session_id]["port"]
-        api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
+        api_url = f"https://www.minecraftservers.cn/api/query?ip={ip}%3A{port}"
         response = requests.get(api_url)
         
-        yield event.plain_result(f"最大人数：\n{response.json()['max']}")
+        yield event.plain_result(f"当前服务器信息：{response.json()['mp']}")
 
     @filter.command("register")
     async def register_server(self, event: AstrMessageEvent, server_info: str):
@@ -47,7 +47,7 @@ class MyPlugin(Star):
                 yield event.plain_result("格式错误！IP地址和端口不能为空")
                 return
             
-            api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
+            api_url = f"https://www.minecraftservers.cn/api/query?ip={ip}%3A{port}"
             self.user_configs[session_id] = {"ip": ip, "port": port}
             yield event.plain_result(f"配置完成，API链接为：\n{api_url}")
         except Exception as e:
@@ -60,7 +60,7 @@ class MyPlugin(Star):
         if session_id in self.user_configs:
             ip = self.user_configs[session_id]["ip"]
             port = self.user_configs[session_id]["port"]
-            api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
+            api_url = f"https://www.minecraftservers.cn/api/query?ip={ip}%3A{port}"
             yield event.plain_result(f"API链接为：\n{api_url}")
         else:
             yield event.plain_result("无")
