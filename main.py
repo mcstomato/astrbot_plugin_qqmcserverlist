@@ -47,29 +47,45 @@ class MyPlugin(Star):
         ip = self.user_configs[session_id]["ip"]
         port = self.user_configs[session_id]["port"]
         api_url = f"https://www.minecraftservers.cn/api/query?ip={ip}%3A{port}"
-        response = requests.get(api_url)
-        api = response.json()
+        
+        temp_file_path = None
+        
+        try:
+            # 设置10秒超时
+            response = requests.get(api_url, timeout=10)
+            api = response.json()
 
-        # 处理 logo 图片
-        logo_data = api['data']['logo']
-        if logo_data:
-            # 保存 Base64 到临时文件
-            temp_file_path = save_base64_to_temp(logo_data)
+            # 处理 logo 图片
+            logo_data = api['data'].get('logo')
+            if logo_data:
+                # 保存 Base64 到临时文件
+                temp_file_path = save_base64_to_temp(logo_data)
 
-        chain = [
-            Comp.Image.fromFileSystem(temp_file_path),
-            Comp.Plain(f"\nmotd:{api['data']['motd']}"),
-            Comp.Plain(f"\n玩家人数:{api['data']['p']}\{api['data']['mp']}"),
-            Comp.Plain(f"\n今日查询最高在线:{api['data']['today_max']}"),
-            Comp.Plain(f"\n今日查询最低在线:{api['data']['today_min']}"),
-            Comp.Plain(f"\n历史查询最高在线:{api['data']['history_max']}"),
-            Comp.Plain(f"\n总查询次数:{api['data']['total_queries']}"),
-            Comp.Plain(f"\n网络延迟:{api['data']['ping']}")
-        ]
-        yield event.chain_result(chain)
+            chain = [
+                Comp.Image.fromFileSystem(temp_file_path) if temp_file_path else Comp.Plain("无logo"),
+                Comp.Plain(f" \nmotd:{api['data']['motd']}"),
+                Comp.Plain(f" \n玩家人数:{api['data']['p']}\{api['data']['mp']}"),
+                Comp.Plain(f" \n今日查询最高在线:{api['data']['today_max']}"),
+                Comp.Plain(f" \n今日查询最低在线:{api['data']['today_min']}"),
+                Comp.Plain(f" \n历史查询最高在线:{api['data']['history_max']}"),
+                Comp.Plain(f" \n总查询次数:{api['data']['total_queries']}"),
+                Comp.Plain(f" \n网络延迟:{api['data']['ping']}")
+            ]
+            yield event.chain_result(chain)
 
-        if temp_file_path:
-            if os.path.exists(temp_file_path):
+        except requests.exceptions.Timeout:
+            yield event.plain_result("获取失败：请求超时（超过10秒）")
+        except requests.exceptions.RequestException as e:
+            yield event.plain_result(f"获取失败：网络连接错误\n{str(e)}")
+        except json.JSONDecodeError:
+            yield event.plain_result("获取失败：API返回数据格式错误")
+        except KeyError as e:
+            yield event.plain_result(f"获取失败：API返回数据缺少字段\n{str(e)}")
+        except Exception as e:
+            yield event.plain_result(f"获取失败：{str(e)}")
+        finally:
+            # 清理临时文件
+            if temp_file_path and os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
 
     @filter.command("register")
