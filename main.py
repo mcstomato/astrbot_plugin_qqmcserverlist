@@ -1,6 +1,7 @@
 from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
+from astrbot.api.message_components import Image
 import requests
 import json
 
@@ -26,8 +27,15 @@ class MyPlugin(Star):
         port = self.user_configs[session_id]["port"]
         api_url = f"https://www.minecraftservers.cn/api/query?ip={ip}%3A{port}"
         response = requests.get(api_url)
+        data = response.json()['data']
         
-        yield event.plain_result(f"当前服务器信息：{response.json()['mp']}")
+        # 发送文本消息
+        yield event.plain_result(f"当前服务器状态：{data['mp']}")
+        
+        # 发送logo图片
+        logo_url = data['logo']
+        if logo_url:
+            yield event.image_result(logo_url)
 
     @filter.command("register")
     async def register_server(self, event: AstrMessageEvent, server_info: str):
