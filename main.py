@@ -25,7 +25,7 @@ class MyPlugin(Star):
     @filter.command("register")
     async def register_server(self, event: AstrMessageEvent, server_info: str):
         """注册服务器配置，格式：/register [ip]:[端口]"""
-        user_id = event.get_sender_id()
+        session_id = event.get_session_id()
         
         if ":" not in server_info:
             yield event.plain_result("格式错误！请使用：/register [ip]:[端口]")
@@ -41,7 +41,7 @@ class MyPlugin(Star):
                 return
             
             api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
-            self.user_configs[user_id] = {"ip": ip, "port": port}
+            self.user_configs[session_id] = {"ip": ip, "port": port}
             yield event.plain_result(f"配置完成，API链接为：\n{api_url}")
         except Exception as e:
             yield event.plain_result(f"配置失败：{str(e)}")
@@ -49,10 +49,10 @@ class MyPlugin(Star):
     @filter.command("query")
     async def query_config(self, event: AstrMessageEvent):
         """查询已配置的API链接"""
-        user_id = event.get_sender_id()
-        if user_id in self.user_configs:
-            ip = self.user_configs[user_id]["ip"]
-            port = self.user_configs[user_id]["port"]
+        session_id = event.get_session_id()
+        if session_id in self.user_configs:
+            ip = self.user_configs[session_id]["ip"]
+            port = self.user_configs[session_id]["port"]
             api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
             yield event.plain_result(f"API链接为：\n{api_url}")
         else:
