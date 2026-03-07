@@ -2,8 +2,29 @@ from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 import astrbot.api.message_components as Comp
+import os
+import tempfile
+import base64
 import requests
 import json
+
+def save_base64_to_temp(logo_data):
+    # 提取 Base64 数据
+    if logo_data.startswith('data:image'):
+        # 分离 MIME 类型和 Base64 数据
+        header, base64_data = logo_data.split(',', 1)
+        # 提取图片扩展名
+        extension = header.split(';')[0].split('/')[1]
+        
+        # 创建临时文件
+        with tempfile.NamedTemporaryFile(suffix=f'.{extension}', delete=False) as temp_file:
+            # 解码 Base64 并写入文件
+            temp_file.write(base64.b64decode(base64_data))
+            temp_file_path = temp_file.name
+        
+        return temp_file_path
+    return None
+
 
 @register("list", "MC_Stomato", "一个简单的服务器查询插件", "1.0.0")
 class MyPlugin(Star):
@@ -29,12 +50,22 @@ class MyPlugin(Star):
         response = requests.get(api_url)
         api = response.json()
 
+        # 处理 logo 图片
+        logo_data = api['data']['logo']
+        if logo_data:
+            # 保存 Base64 到临时文件
+            temp_file_path = save_base64_to_temp(logo_data)
+
         chain = [
             Comp.Plain("logo："),
-            Comp.Image.fromURL({api['data']['logo']}), # 从 URL 发送图片
+            Comp.Image.fromFileSystem(temp_file_path),
             Comp.Plain(f"motd:{api['data']['motd']}")
         ]
         yield event.chain_result(chain)
+
+        if temp_file_path:
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
 
     @filter.command("register")
     async def register_server(self, event: AstrMessageEvent, server_info: str):
