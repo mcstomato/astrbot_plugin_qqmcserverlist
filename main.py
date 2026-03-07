@@ -63,13 +63,15 @@ class MyPlugin(Star):
 
             chain = [
                 Comp.Image.fromFileSystem(temp_file_path) if temp_file_path else Comp.Plain("无logo"),
-                Comp.Plain(f" \nmotd:{api['data']['motd']}"),
-                Comp.Plain(f" \n玩家人数:{api['data']['p']}\{api['data']['mp']}"),
-                Comp.Plain(f" \n今日查询最高在线:{api['data']['today_max']}"),
-                Comp.Plain(f" \n今日查询最低在线:{api['data']['today_min']}"),
-                Comp.Plain(f" \n历史查询最高在线:{api['data']['history_max']}"),
-                Comp.Plain(f" \n总查询次数:{api['data']['total_queries']}"),
-                Comp.Plain(f" \n网络延迟:{api['data']['ping']}")
+                Comp.Plain(
+                        f"motd:{api['data']['motd']}\n"
+                        f"玩家人数:{api['data']['p']}\{api['data']['mp']}\n"
+                        f"今日查询最高在线:{api['data']['today_max']}\n"
+                        f"今日查询最低在线:{api['data']['today_min']}\n"
+                        f"历史查询最高在线:{api['data']['history_max']}\n"
+                        f"查询次数:{api['data']['total_queries']}\n"
+                        f"网络延迟:{api['data']['ping']}"
+                        )
             ]
             yield event.chain_result(chain)
 
