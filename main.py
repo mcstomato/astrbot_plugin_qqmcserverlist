@@ -25,8 +25,9 @@ class MyPlugin(Star):
         ip = self.user_configs[session_id]["ip"]
         port = self.user_configs[session_id]["port"]
         api_url = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
+        response = requests.get(api_url)
         
-        yield event.plain_result(f"API链接为：\n{api_url}")
+        yield event.plain_result(f"最大人数：\n{response.json()['max']}")
 
     @filter.command("register")
     async def register_server(self, event: AstrMessageEvent, server_info: str):
