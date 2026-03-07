@@ -47,19 +47,29 @@ class MyPlugin(Star):
         ip = self.user_configs[session_id]["ip"]
         port = self.user_configs[session_id]["port"]
         api_url = f"https://www.minecraftservers.cn/api/query?ip={ip}%3A{port}"
+        api_url2 = f"https://api.miri.site/mcPlayer/get.php?ip={ip}&port={port}"
         
         temp_file_path = None
         
         try:
-            # 设置10秒超时
+            # 设置10秒超时，同时请求两个 API
             response = requests.get(api_url, timeout=10)
+            response2 = requests.get(api_url2, timeout=10)
             api = response.json()
+            api2 = response2.json()
 
             # 处理 logo 图片
             logo_data = api['data'].get('logo')
             if logo_data:
                 # 保存 Base64 到临时文件
                 temp_file_path = save_base64_to_temp(logo_data)
+
+            # 提取所有玩家 name
+            player_names = []
+            if 'sample' in api2['data']:
+                for player in api2['data']['sample']:
+                    player_names.append(player.get('name', ''))
+            players_str = ', '.join(player_names) if player_names else '无'
 
             chain = [
                 Comp.Image.fromFileSystem(temp_file_path) if temp_file_path else Comp.Plain("无logo"),
@@ -70,7 +80,8 @@ class MyPlugin(Star):
                         f"今日查询最低在线:{api['data']['today_min']}\n"
                         f"历史查询最高在线:{api['data']['history_max']}\n"
                         f"查询次数:{api['data']['total_queries']}\n"
-                        f"网络延迟:{api['data']['ping']}"
+                        f"网络延迟:{api['data']['ping']}\n"
+                        f"在线玩家:{players_str}"
                         )
             ]
             yield event.chain_result(chain)
