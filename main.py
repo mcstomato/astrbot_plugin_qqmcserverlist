@@ -66,8 +66,8 @@ class MyPlugin(Star):
 
             # 提取所有玩家 name
             player_names = []
-            if 'sample' in api2['data']:
-                for player in api2['data']['sample']:
+            if 'sample' in api2:
+                for player in api2['sample']:
                     player_names.append(player.get('name', ''))
             players_str = ', '.join(player_names) if player_names else '无'
 
