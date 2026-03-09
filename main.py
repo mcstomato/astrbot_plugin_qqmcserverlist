@@ -80,8 +80,7 @@ class MyPlugin(Star):
                         f"今日查询最低在线:{api['data']['today_min']}\n"
                         f"历史查询最高在线:{api['data']['history_max']}\n"
                         f"查询次数:{api['data']['total_queries']}\n"
-                        f"网络延迟:{api['data']['ping']}\n"
-                        f"在线玩家:{players_str}"
+                        f"网络延迟:{api['data']['ping']}"
                         )
             ]
             yield event.chain_result(chain)
@@ -93,7 +92,7 @@ class MyPlugin(Star):
         except json.JSONDecodeError:
             yield event.plain_result("获取失败：API返回数据格式错误")
         except KeyError as e:
-            yield event.plain_result(f"获取失败：API返回数据缺少字段\n{str(e)}")
+            yield event.plain_result(f"别list了，估计寄了")
         except Exception as e:
             yield event.plain_result(f"获取失败：{str(e)}")
         finally:
