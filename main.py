@@ -7,6 +7,25 @@ import tempfile
 import base64
 import requests
 import json
+from functools import wraps
+
+# ==================== 权限配置中心 ====================
+# 在这里统一管理所有命令的权限
+COMMAND_PERMISSIONS = {
+    # 命令名: 需要的权限级别
+    # "admin" - 仅群管理员可用
+    # "all" - 所有人可用
+    "list": "all",           # 查询服务器信息
+    "query": "admin",          # 查询已配置的API链接
+    "register": "admin",         # 注册服务器配置（所有人可用）
+    "addadmin": "admin",       # 添加机器人管理员
+    "deladmin": "admin",       # 移除机器人管理员
+    "listadmin": "admin",      # 查看机器人管理员列表
+}
+
+# 机器人管理员列表（用户ID）
+BOT_ADMIN_USERS = set()
+# ====================================================
 
 def save_base64_to_temp(logo_data):
     # 提取 Base64 数据
@@ -26,6 +45,34 @@ def save_base64_to_temp(logo_data):
     return None
 
 
+def require_permission(command_name: str):
+    """
+    权限检查装饰器
+    根据 COMMAND_PERMISSIONS 配置自动检查权限
+    """
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(self, event: AstrMessageEvent, *args, **kwargs):
+            # 获取命令权限配置
+            permission = COMMAND_PERMISSIONS.get(command_name, "all")
+            
+            # 如果需要管理员权限
+            if permission == "admin":
+                # 检查是否是群管理员
+                if event.role != "admin":
+                    # 检查是否是机器人管理员
+                    user_id = event.get_sender_id()
+                    if user_id not in BOT_ADMIN_USERS:
+                        yield event.plain_result("权限不足！只有群管理员或机器人管理员可以使用此命令。")
+                        return
+            
+            # 权限检查通过，执行原函数
+            async for result in func(self, event, *args, **kwargs):
+                yield result
+        return wrapper
+    return decorator
+
+
 @register("list", "MC_Stomato", "一个简单的服务器查询插件", "1.0.0")
 class MyPlugin(Star):
     def __init__(self, context: Context):
@@ -36,6 +83,7 @@ class MyPlugin(Star):
         """可选择实现异步的插件初始化方法，当实例化该插件类之后会自动调用该方法。"""
 
     @filter.command("list")
+    @require_permission("list")
     async def helloworld(self, event: AstrMessageEvent):
         """这是一个 list 指令"""
         session_id = event.get_session_id()
@@ -101,6 +149,7 @@ class MyPlugin(Star):
                 os.remove(temp_file_path)
 
     @filter.command("register")
+    @require_permission("register")
     async def register_server(self, event: AstrMessageEvent, server_info: str):
         """注册服务器配置，格式：/register [ip]:[端口]"""
         session_id = event.get_session_id()
@@ -125,6 +174,7 @@ class MyPlugin(Star):
             yield event.plain_result(f"配置失败：{str(e)}")
 
     @filter.command("query")
+    @require_permission("query")
     async def query_config(self, event: AstrMessageEvent):
         """查询已配置的API链接"""
         session_id = event.get_session_id()
@@ -135,6 +185,30 @@ class MyPlugin(Star):
             yield event.plain_result(f"API链接为：\n{api_url}")
         else:
             yield event.plain_result("无")
+
+    @filter.command("addadmin")
+    @require_permission("addadmin")
+    async def add_admin_command(self, event: AstrMessageEvent, user_id: str):
+        """添加机器人管理员，格式：/addadmin [用户ID]"""
+        BOT_ADMIN_USERS.add(user_id)
+        yield event.plain_result(f"已添加机器人管理员：{user_id}")
+
+    @filter.command("deladmin")
+    @require_permission("deladmin")
+    async def del_admin_command(self, event: AstrMessageEvent, user_id: str):
+        """移除机器人管理员，格式：/deladmin [用户ID]"""
+        BOT_ADMIN_USERS.discard(user_id)
+        yield event.plain_result(f"已移除机器人管理员：{user_id}")
+
+    @filter.command("listadmin")
+    @require_permission("listadmin")
+    async def list_admin_command(self, event: AstrMessageEvent):
+        """查看机器人管理员列表"""
+        if BOT_ADMIN_USERS:
+            admin_list = "\n".join(BOT_ADMIN_USERS)
+            yield event.plain_result(f"机器人管理员列表：\n{admin_list}")
+        else:
+            yield event.plain_result("当前没有机器人管理员")
 
     async def terminate(self):
         """可选择实现异步的插件销毁方法，当插件被卸载/停用时会调用。"""
