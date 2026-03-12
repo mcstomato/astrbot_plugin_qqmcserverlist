@@ -222,7 +222,7 @@ class MyPlugin(Star):
             if last_left != -1 and last_right != -1 and last_left < last_right:
                 user_id = full_message[last_left+1:last_right]
 
-        BOT_ADMIN_USERS.add(full_message)
+        BOT_ADMIN_USERS.add(user_id)
         yield event.plain_result(f"已添加机器人管理员：{user_id}")
 
     @filter.command("deladmin")
@@ -230,8 +230,16 @@ class MyPlugin(Star):
     async def del_admin_command(self, event: AstrMessageEvent, user_id: str):
         """移除机器人管理员，格式：/deladmin [用户ID]"""
         
-        if "(" in user_id and ")" in user_id:
-            user_id = user_id.split("(")[1].split(")")[0]
+        full_message = event.message_str.strip()
+        # 调试日志
+        logger.info(f"完整消息: {full_message}")
+
+        if "(" in full_message and ")" in full_message:
+            # 找到最后一个括号对
+            last_left = full_message.rfind("(")
+            last_right = full_message.rfind(")")
+            if last_left != -1 and last_right != -1 and last_left < last_right:
+                user_id = full_message[last_left+1:last_right]
 
         BOT_ADMIN_USERS.discard(user_id)
         yield event.plain_result(f"已移除机器人管理员：{user_id}")
