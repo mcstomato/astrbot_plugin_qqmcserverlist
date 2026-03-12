@@ -221,6 +221,10 @@ class MyPlugin(Star):
     @require_permission("deladmin")
     async def del_admin_command(self, event: AstrMessageEvent, user_id: str):
         """移除机器人管理员，格式：/deladmin [用户ID]"""
+        
+        if "(" in user_id and ")" in user_id:
+            user_id = user_id.split("(")[1].split(")")[0]
+
         BOT_ADMIN_USERS.discard(user_id)
         yield event.plain_result(f"已移除机器人管理员：{user_id}")
 
