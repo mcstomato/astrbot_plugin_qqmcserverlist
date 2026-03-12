@@ -212,7 +212,11 @@ class MyPlugin(Star):
         """添加机器人管理员，格式：/addadmin [用户ID]"""
 
         if "(" in user_id and ")" in user_id:
-            user_id = user_id.split("(")[1].split(")")[0]
+            # 找到最后一个括号对
+            last_left = user_id.rfind("(")
+            last_right = user_id.rfind(")")
+            if last_left != -1 and last_right != -1 and last_left < last_right:
+                user_id = user_id[last_left+1:last_right]
 
         BOT_ADMIN_USERS.add(user_id)
         yield event.plain_result(f"已添加机器人管理员：{user_id}")
