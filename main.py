@@ -240,7 +240,7 @@ class MyPlugin(Star):
             if start_idx < end_idx:
                 user_id = params[start_idx:end_idx]
         # 确保只保留数字部分
-        user_id = ''.join(filter(lambda c: c.isdigit(), user_id))
+        user_id = ''.join([c for c in user_id if c.isdigit()])
         
         BOT_ADMIN_USERS.add(user_id)
         yield event.plain_result(f"已添加机器人管理员：{user_id}")
@@ -279,7 +279,7 @@ class MyPlugin(Star):
             if start_idx < end_idx:
                 user_id = params[start_idx:end_idx]
         # 确保只保留数字部分
-        user_id = ''.join(filter(lambda c: c.isdigit(), user_id))
+        user_id = ''.join([c for c in user_id if c.isdigit()])
         
         BOT_ADMIN_USERS.discard(user_id)
         yield event.plain_result(f"已移除机器人管理员：{user_id}")
