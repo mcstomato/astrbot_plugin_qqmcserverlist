@@ -208,15 +208,59 @@ class MyPlugin(Star):
 
     @filter.command("addadmin")
     @require_permission("addadmin")
-    async def add_admin_command(self, event: AstrMessageEvent, user_id: str):
-        """添加机器人管理员，格式：/addadmin [用户ID]"""
+    async def add_admin_command(self, event: AstrMessageEvent):
+        """添加机器人管理员，格式：/addadmin [用户ID] 或 /addadmin @用户"""
+        # 获取完整的消息文本
+        full_message = event.message_str.strip()
+        
+        # 提取参数部分（去掉 addadmin 前缀）
+        if full_message.startswith('addadmin '):
+            params = full_message[8:].strip()  # 8是"addadmin "的长度
+        else:
+            params = ""
+        
+        if not params:
+            yield event.plain_result("请提供要添加的用户ID，格式：/addadmin [用户ID] 或 /addadmin @用户")
+            return
+        
+        # 处理@用户格式
+        user_id = params
+        if '[' in params and ']' in params:
+            # 提取QQ号，格式如：@昵称[123456789]
+            start_idx = params.find('[') + 1
+            end_idx = params.find(']')
+            if start_idx < end_idx:
+                user_id = params[start_idx:end_idx]
+        
         BOT_ADMIN_USERS.add(user_id)
         yield event.plain_result(f"已添加机器人管理员：{user_id}")
 
     @filter.command("deladmin")
     @require_permission("deladmin")
-    async def del_admin_command(self, event: AstrMessageEvent, user_id: str):
-        """移除机器人管理员，格式：/deladmin [用户ID]"""
+    async def del_admin_command(self, event: AstrMessageEvent):
+        """移除机器人管理员，格式：/deladmin [用户ID] 或 /deladmin @用户"""
+        # 获取完整的消息文本
+        full_message = event.message_str.strip()
+        
+        # 提取参数部分（去掉 deladmin 前缀）
+        if full_message.startswith('deladmin '):
+            params = full_message[8:].strip()  # 8是"deladmin "的长度
+        else:
+            params = ""
+        
+        if not params:
+            yield event.plain_result("请提供要移除的用户ID，格式：/deladmin [用户ID] 或 /deladmin @用户")
+            return
+        
+        # 处理@用户格式
+        user_id = params
+        if '[' in params and ']' in params:
+            # 提取QQ号，格式如：@昵称[123456789]
+            start_idx = params.find('[') + 1
+            end_idx = params.find(']')
+            if start_idx < end_idx:
+                user_id = params[start_idx:end_idx]
+        
         BOT_ADMIN_USERS.discard(user_id)
         yield event.plain_result(f"已移除机器人管理员：{user_id}")
 
