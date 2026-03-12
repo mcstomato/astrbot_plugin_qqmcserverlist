@@ -211,7 +211,7 @@ class MyPlugin(Star):
     async def add_admin_command(self, event: AstrMessageEvent, user_id: str):
         """添加机器人管理员，格式：/addadmin [用户ID]"""
 
-        if "[At:" in user_id and "]" in user_id:
+        if "(" in user_id and ")" in user_id:
             user_id = user_id.split("[At:")[1].split("]")[0]
 
         BOT_ADMIN_USERS.add(user_id)
