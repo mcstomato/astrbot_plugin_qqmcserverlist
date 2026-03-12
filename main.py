@@ -212,7 +212,7 @@ class MyPlugin(Star):
         """添加机器人管理员，格式：/addadmin [用户ID]"""
 
         if "(" in user_id and ")" in user_id:
-            user_id = user_id.split("[At:")[1].split("]")[0]
+            user_id = user_id.split("(")[1].split(")")[0]
 
         BOT_ADMIN_USERS.add(user_id)
         yield event.plain_result(f"已添加机器人管理员：{user_id}")
