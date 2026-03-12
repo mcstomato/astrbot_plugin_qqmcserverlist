@@ -474,7 +474,6 @@ class MyPlugin(Star):
         except Exception as e:
             logger.error(f"RCON 执行失败: {e}", exc_info=True)
             yield event.plain_result(f"RCON 命令执行失败：{str(e)}")
-        
     
     @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
     async def on_message(self, event: AstrMessageEvent):
@@ -529,7 +528,6 @@ class MyPlugin(Star):
                         
             except Exception as e:
                 logger.error(f"RCON 执行失败: {e}", exc_info=True)
-
 
         # 记录日志
         logger.info(f"存储最新消息 - 发送者: {sender_name}, 内容: {message_content}")
