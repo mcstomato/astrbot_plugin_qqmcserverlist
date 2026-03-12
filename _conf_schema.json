@@ -1,0 +1,26 @@
+{
+  "rcon_address": {
+    "description": "Rcon地址",
+    "type": "string",
+    "hint": "Minecraft服务器的Rcon地址，如 127.0.0.1",
+    "default": ""
+  },
+  "rcon_port": {
+    "description": "Rcon端口",
+    "type": "int",
+    "hint": "Minecraft服务器的Rcon端口，默认为25575",
+    "default": 25575
+  },
+  "rcon_password": {
+    "description": "Rcon密码",
+    "type": "string",
+    "hint": "Minecraft服务器的Rcon密码",
+    "default": ""
+  },
+  "allowed_groups": {
+    "description": "允许使用插件的群聊ID",
+    "type": "string",
+    "hint": "多个群聊ID用逗号隔开，如：123456789,987654321",
+    "default": ""
+  }
+}
