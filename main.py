@@ -225,12 +225,22 @@ class MyPlugin(Star):
         
         # 处理@用户格式
         user_id = params
-        if '[' in params and ']' in params:
+        # 处理格式：[At:2186476377]
+        if '[At:' in params and ']' in params:
+            # 提取QQ号，格式如：[At:2186476377]
+            start_idx = params.find('[At:') + 4  # 4是"[At:"的长度
+            end_idx = params.find(']')
+            if start_idx < end_idx:
+                user_id = params[start_idx:end_idx]
+        # 处理格式：@昵称[123456789]
+        elif '[' in params and ']' in params:
             # 提取QQ号，格式如：@昵称[123456789]
             start_idx = params.find('[') + 1
             end_idx = params.find(']')
             if start_idx < end_idx:
                 user_id = params[start_idx:end_idx]
+        # 确保只保留数字部分
+        user_id = ''.join(filter(str.isdigit, user_id))
         
         BOT_ADMIN_USERS.add(user_id)
         yield event.plain_result(f"已添加机器人管理员：{user_id}")
@@ -254,12 +264,22 @@ class MyPlugin(Star):
         
         # 处理@用户格式
         user_id = params
-        if '[' in params and ']' in params:
+        # 处理格式：[At:2186476377]
+        if '[At:' in params and ']' in params:
+            # 提取QQ号，格式如：[At:2186476377]
+            start_idx = params.find('[At:') + 4  # 4是"[At:"的长度
+            end_idx = params.find(']')
+            if start_idx < end_idx:
+                user_id = params[start_idx:end_idx]
+        # 处理格式：@昵称[123456789]
+        elif '[' in params and ']' in params:
             # 提取QQ号，格式如：@昵称[123456789]
             start_idx = params.find('[') + 1
             end_idx = params.find(']')
             if start_idx < end_idx:
                 user_id = params[start_idx:end_idx]
+        # 确保只保留数字部分
+        user_id = ''.join(filter(str.isdigit, user_id))
         
         BOT_ADMIN_USERS.discard(user_id)
         yield event.plain_result(f"已移除机器人管理员：{user_id}")
