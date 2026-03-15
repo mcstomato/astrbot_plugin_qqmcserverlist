@@ -102,7 +102,7 @@ class MyPlugin(Star):
             self.allowed_groups = set(group.strip() for group in allowed_groups_str.split(",") if group.strip())
         logger.info(f"群聊白名单已加载: {self.allowed_groups}")
 
-    @filter.command("info")
+    @filter.command("info",alias={'信息'})
     @require_permission("info")
     async def helloworld(self, event: AstrMessageEvent):
         """这是一个 info 指令"""
@@ -206,7 +206,7 @@ class MyPlugin(Star):
         else:
             yield event.plain_result("无")
 
-    @filter.command("addadmin")
+    @filter.command("addadmin",alias={'添加管理员'})
     @require_permission("addadmin")
     async def add_admin_command(self, event: AstrMessageEvent, user_id: str):
         """添加机器人管理员，格式：/addadmin [用户ID]"""
