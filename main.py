@@ -25,7 +25,7 @@ COMMAND_PERMISSIONS = {
     "listadmin": "admin",      # 查看机器人管理员列表
     "command": "admin",      # 向服务器发送命令
     "list": "all",           # 查询服务器玩家列表
-    "group": "admin",        # 群组消息可视选项
+    "group": "all",        # 群组消息可视选项
 }
 
 # 机器人管理员列表（用户ID）
@@ -524,7 +524,7 @@ class MyPlugin(Star):
             try:
                 with mcrcon.MCRcon(rcon_address, rcon_password, rcon_port) as mcr:
                     logger.info(f"发送命令: {chat}")
-                    mcr.command(chat)
+                    logger.info(mcr.command(chat))
                         
             except Exception as e:
                 logger.error(f"RCON 执行失败: {e}", exc_info=True)
