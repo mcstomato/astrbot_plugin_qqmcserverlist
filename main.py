@@ -437,12 +437,15 @@ class MyPlugin(Star):
         tf_value = parts[1].upper()
         
         # 检查T/F参数是否有效
-        if tf_value not in ['T', 'F']:
+        if tf_value not in ['T', 'F', '1', '0', '开启', '关闭']:
             yield event.plain_result("请提供要发送的命令，格式：/group [玩家ID] [T(开启)/F(关闭)]")
             return
         
         # 转换T/F为1/0
-        group_value = 1 if tf_value == 'T' else 0
+        if tf_value in ['T', '1', '开启']:
+            group_value = 1
+        else:
+            group_value = 0
         
         # 保存到变量
         self.group_settings[player_id] = group_value
@@ -475,6 +478,25 @@ class MyPlugin(Star):
             logger.error(f"RCON 执行失败: {e}", exc_info=True)
             yield event.plain_result(f"RCON 命令执行失败：{str(e)}")
     
+    @filter.command("help")
+    @require_permission("info")
+    async def help_command(self, event: AstrMessageEvent):
+        '''显示所有可用指令信息'''
+        help_message = "===== MC服务器列表插件指令帮助 =====\n"
+        help_message += "/info - 查询服务器信息\n"
+        help_message += "/register [ip]:[端口] - 注册服务器配置\n"
+        help_message += "/query - 查询已配置的API链接\n"
+        help_message += "/addadmin [用户ID] - 添加机器人管理员\n"
+        help_message += "/deladmin [用户ID] - 移除机器人管理员\n"
+        help_message += "/listadmin - 查看机器人管理员列表\n"
+        help_message += "/command [命令] - 向服务器发送命令（支持 /cmd 别名）\n"
+        help_message += "/rank [榜单名] - 查询服务器排行榜（死亡榜、在线时长、伤害）\n"
+        help_message += "/list - 查询服务器玩家列表\n"
+        help_message += "/group [玩家ID] [T(开启)/F(关闭)] - 设置群组消息可视选项\n"
+        help_message += "/help - 显示此帮助信息\n"
+        help_message += "==================================="
+        yield event.plain_result(help_message)
+    
     @filter.event_message_type(filter.EventMessageType.GROUP_MESSAGE)
     async def on_message(self, event: AstrMessageEvent):
         """监听所有消息，存储非指令消息的发送者和内容"""
@@ -485,6 +507,16 @@ class MyPlugin(Star):
                 return
         
         message_content = event.message_str.strip()
+        
+        # 处理 /cmd 别名
+        if message_content.startswith("cmd "):
+            # 将 /cmd 转换为 /command
+            new_message = "command " + message_content[4:]
+            event.message_str = new_message
+            # 调用 command_command 方法
+            async for result in self.command_command(event):
+                yield result
+            return
         
         for cmd in COMMAND_PERMISSIONS.keys():
             if message_content.startswith(cmd + " ") or message_content == cmd:
