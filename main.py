@@ -168,7 +168,7 @@ class MyPlugin(Star):
             if temp_file_path and os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
 
-    @filter.command("register")
+    @filter.command("register",alias={'注册ip'})
     @require_permission("register")
     async def register_server(self, event: AstrMessageEvent, server_info: str):
         """注册服务器配置，格式：/register [ip]:[端口]"""
@@ -225,7 +225,7 @@ class MyPlugin(Star):
         BOT_ADMIN_USERS.add(user_id)
         yield event.plain_result(f"已添加机器人管理员：{user_id}")
 
-    @filter.command("deladmin")
+    @filter.command("deladmin",alias={'删除管理员'})
     @require_permission("deladmin")
     async def del_admin_command(self, event: AstrMessageEvent, user_id: str):
         """移除机器人管理员，格式：/deladmin [用户ID]"""
@@ -244,7 +244,7 @@ class MyPlugin(Star):
         BOT_ADMIN_USERS.discard(user_id)
         yield event.plain_result(f"已移除机器人管理员：{user_id}")
 
-    @filter.command("listadmin")
+    @filter.command("listadmin",alias={'管理员列表'})
     @require_permission("listadmin")
     async def list_admin_command(self, event: AstrMessageEvent):
         """查看机器人管理员列表"""
@@ -254,7 +254,7 @@ class MyPlugin(Star):
         else:
             yield event.plain_result("当前没有机器人管理员")
 
-    @filter.command("command")
+    @filter.command("command",alias={'cmd','控制台'})
     @require_permission("command")
     async def command_command(self, event: AstrMessageEvent):
         """向服务器发送命令，格式：/command [命令]"""
@@ -302,7 +302,7 @@ class MyPlugin(Star):
             yield event.plain_result(f"RCON 命令执行失败：{str(e)}")
 
 
-    @filter.command("rank")
+    @filter.command("rank",alias={'排行榜','排行'})
     @require_permission("rank")
     async def server_rank(self, event: AstrMessageEvent):
         '''这是一个 服务器排行榜 指令''' # 这是 handler 的描述，将会被解析方便用户了解插件内容。非常建议填写。
@@ -329,12 +329,20 @@ class MyPlugin(Star):
             rank_name = ""
         # 映射榜单名到 RCON 命令
         rcon_command = ""
-        if rank_name == "死亡榜":
+        if rank_name == "死亡榜" or rank_name == "死亡" or rank_name == "deaths" :
             rcon_command = "leaderboard deaths"
         elif rank_name == "在线时长":
             rcon_command = "leaderboard time_played"
         elif rank_name == "伤害":
             rcon_command = "leaderboard damage_dealt"
+        elif rank_name == "距离" or rank_name == "行进距离":
+            rcon_command = "leaderboard distance_walked"
+        elif rank_name == "跳跃" or rank_name == "跳跃次数" or rank_name == "跳跃数":
+            rcon_command = "leaderboard jumps"
+        elif rank_name == "生物击杀" or rank_name == "生物击杀数" or rank_name == "mob_kills":
+            rcon_command = "leaderboard mob_kills"
+        elif rank_name == "玩家击杀" or rank_name == "玩家击杀数" or rank_name == "player_kills":
+            rcon_command = "leaderboard player_kills"
         else:
             yield event.plain_result(f"不支持的榜单名：{rank_name}")
             return
@@ -355,7 +363,7 @@ class MyPlugin(Star):
             logger.error(f"RCON 执行失败: {e}", exc_info=True)
             yield event.plain_result(f"RCON 命令执行失败：{str(e)}")
 
-    @filter.command("list")
+    @filter.command("list",alias={'玩家列表','在线玩家'})
     @require_permission("list")
     async def server_play_list(self, event: AstrMessageEvent):
         '''这是一个 服务器玩家列表 指令''' # 这是 handler 的描述，将会被解析方便用户了解插件内容。非常建议填写。
@@ -404,7 +412,7 @@ class MyPlugin(Star):
             logger.error(f"RCON 执行失败: {e}", exc_info=True)
             yield event.plain_result(f"RCON 命令执行失败：{str(e)}")
 
-    @filter.command("group")
+    @filter.command("group",alias={'群组消息','群组'})
     @require_permission("group")
     async def group(self, event: AstrMessageEvent):
         '''这是一个 群组消息可视选项 指令'''
@@ -478,7 +486,7 @@ class MyPlugin(Star):
             logger.error(f"RCON 执行失败: {e}", exc_info=True)
             yield event.plain_result(f"RCON 命令执行失败：{str(e)}")
     
-    @filter.command("help")
+    @filter.command("help",alias={'帮助'})
     @require_permission("info")
     async def help_command(self, event: AstrMessageEvent):
         '''显示所有可用指令信息'''
