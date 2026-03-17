@@ -588,22 +588,29 @@ class MyPlugin(Star):
                     "has_repeated": False,
                     "last_repeat_time": 0
                 }
+                logger.info(f"[复读机] 初始化群聊 {group_id} 的跟踪器")
             
             tracker = self.repeat_tracker[group_id]
+            logger.info(f"[复读机] 群聊 {group_id} 当前状态 - 上一条消息: '{tracker['last_message']}', 连续计数: {tracker['count']}, 已复读: {tracker['has_repeated']}")
+            logger.info(f"[复读机] 当前消息: '{message_content}', 发送者: {sender_name}")
             
             # 检查是否与上一条消息相同
             if message_content == tracker["last_message"]:
                 # 相同消息，增加计数
                 tracker["count"] += 1
+                logger.info(f"[复读机] 检测到相同消息，连续计数增加到: {tracker['count']}")
                 
                 # 检查是否需要复读
                 # 如果已经复读过，检查是否超过冷却时间（60秒）
                 if tracker["has_repeated"]:
                     current_time = time.time()
-                    if current_time - tracker["last_repeat_time"] > 60:
+                    time_since_last_repeat = current_time - tracker["last_repeat_time"]
+                    logger.info(f"[复读机] 已处于复读状态，距上次复读: {time_since_last_repeat:.1f}秒")
+                    if time_since_last_repeat > 60:
                         # 超过冷却时间，重置复读状态
                         tracker["has_repeated"] = False
                         tracker["count"] = 1
+                        logger.info(f"[复读机] 冷却时间已过，重置复读状态")
                 
                 # 如果没有复读过，根据连续次数决定是否复读
                 if not tracker["has_repeated"]:
@@ -619,15 +626,25 @@ class MyPlugin(Star):
                         else:
                             repeat_probability = 1.0
                         
+                        logger.info(f"[复读机] 达到复读条件，连续次数: {tracker['count']}, 复读概率: {repeat_probability*100}%")
+                        
                         # 随机决定是否复读
-                        if random.random() < repeat_probability:
+                        random_value = random.random()
+                        logger.info(f"[复读机] 随机值: {random_value:.3f}, 阈值: {repeat_probability}")
+                        
+                        if random_value < repeat_probability:
                             # 复读成功
                             tracker["has_repeated"] = True
                             tracker["last_repeat_time"] = time.time()
-                            logger.info(f"复读机触发！群聊 {group_id}，消息：{message_content}，概率：{repeat_probability*100}%")
+                            logger.info(f"[复读机] ✅ 复读成功！群聊 {group_id}，消息：{message_content}")
                             yield event.plain_result(message_content)
+                        else:
+                            logger.info(f"[复读机] ❌ 复读未触发，继续等待")
+                    else:
+                        logger.info(f"[复读机] 连续次数不足3次，暂不触发复读判断")
             else:
                 # 不同消息，重置计数
+                logger.info(f"[复读机] 消息不同，重置计数器")
                 tracker["last_message"] = message_content
                 tracker["count"] = 1
                 tracker["has_repeated"] = False
