@@ -9,6 +9,8 @@ import requests
 import json
 from functools import wraps
 import mcrcon
+import random
+import time
 
 # ==================== 权限配置中心 ====================
 # 在这里统一管理所有命令的权限
@@ -95,6 +97,9 @@ class MyPlugin(Star):
         self.latest_message = {"sender": "", "content": ""}
         # 存储群组消息可视选项配置
         self.group_settings = {}
+        # 复读机跟踪器：每个群聊的连续消息情况
+        # 格式：{group_id: {"last_message": "", "count": 0, "has_repeated": False, "last_repeat_time": 0}}
+        self.repeat_tracker = {}
         # 解析允许的群聊ID
         allowed_groups_str = self.config.get("allowed_groups", "")
         self.allowed_groups = set()
@@ -571,6 +576,61 @@ class MyPlugin(Star):
 
         # 记录日志
         logger.info(f"存储最新消息 - 发送者: {sender_name}, 内容: {message_content}")
+        
+        # ===== 复读机功能 =====
+        group_id = event.get_group_id()
+        if group_id:
+            # 初始化该群聊的跟踪器
+            if group_id not in self.repeat_tracker:
+                self.repeat_tracker[group_id] = {
+                    "last_message": "",
+                    "count": 0,
+                    "has_repeated": False,
+                    "last_repeat_time": 0
+                }
+            
+            tracker = self.repeat_tracker[group_id]
+            
+            # 检查是否与上一条消息相同
+            if message_content == tracker["last_message"]:
+                # 相同消息，增加计数
+                tracker["count"] += 1
+                
+                # 检查是否需要复读
+                # 如果已经复读过，检查是否超过冷却时间（60秒）
+                if tracker["has_repeated"]:
+                    current_time = time.time()
+                    if current_time - tracker["last_repeat_time"] > 60:
+                        # 超过冷却时间，重置复读状态
+                        tracker["has_repeated"] = False
+                        tracker["count"] = 1
+                
+                # 如果没有复读过，根据连续次数决定是否复读
+                if not tracker["has_repeated"]:
+                    repeat_probability = 0
+                    if tracker["count"] >= 3:
+                        # 第3条消息：30%概率
+                        # 第4条消息：60%概率
+                        # 第5条及以上：100%概率
+                        if tracker["count"] == 3:
+                            repeat_probability = 0.3
+                        elif tracker["count"] == 4:
+                            repeat_probability = 0.6
+                        else:
+                            repeat_probability = 1.0
+                        
+                        # 随机决定是否复读
+                        if random.random() < repeat_probability:
+                            # 复读成功
+                            tracker["has_repeated"] = True
+                            tracker["last_repeat_time"] = time.time()
+                            logger.info(f"复读机触发！群聊 {group_id}，消息：{message_content}，概率：{repeat_probability*100}%")
+                            yield event.plain_result(message_content)
+            else:
+                # 不同消息，重置计数
+                tracker["last_message"] = message_content
+                tracker["count"] = 1
+                tracker["has_repeated"] = False
         
         # 不返回任何结果，避免干扰正常消息流程
         return
