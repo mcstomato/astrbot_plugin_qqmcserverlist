@@ -556,7 +556,18 @@ class MyPlugin(Star):
             logger.info("RCON 配置不完整，请在插件设置中配置 RCON 地址和密码")
             return
 
+        '''
         chat = f"tellraw @a[scores={{group=1}}] [\
+            {{\"text\":\"[\",\"color\":\"white\"}},\
+            {{\"text\":\"群组消息\",\"color\":\"#FFA500\"}},\
+            {{\"text\":\"] \",\"color\":\"white\"}},\
+            {{\"text\":\"<\",\"color\":\"white\"}},\
+            {{\"text\":\"{sender_name}\",\"color\":\"green\"}},\
+            {{\"text\":\">\",\"color\":\"white\"}},\
+            {{\"text\":\":\"}},{{\"text\":\" {message_content}\"}}]"
+        '''
+
+        chat = f"tellraw @a [\
             {{\"text\":\"[\",\"color\":\"white\"}},\
             {{\"text\":\"群组消息\",\"color\":\"#FFA500\"}},\
             {{\"text\":\"] \",\"color\":\"white\"}},\
@@ -606,7 +617,7 @@ class MyPlugin(Star):
                     current_time = time.time()
                     time_since_last_repeat = current_time - tracker["last_repeat_time"]
                     logger.info(f"[复读机] 已处于复读状态，距上次复读: {time_since_last_repeat:.1f}秒")
-                    if time_since_last_repeat > 60:
+                    if time_since_last_repeat > 1200:
                         # 超过冷却时间，重置复读状态
                         tracker["has_repeated"] = False
                         tracker["count"] = 1
@@ -616,15 +627,15 @@ class MyPlugin(Star):
                 if not tracker["has_repeated"]:
                     repeat_probability = 0
                     if tracker["count"] >= 3:
-                        # 第3条消息：30%概率
-                        # 第4条消息：60%概率
-                        # 第5条及以上：100%概率
+                        # 第3条消息：10%概率
+                        # 第4条消息：20%概率
+                        # 第5条及以上：30%概率
                         if tracker["count"] == 3:
-                            repeat_probability = 0.3
+                            repeat_probability = 0.1
                         elif tracker["count"] == 4:
-                            repeat_probability = 0.6
+                            repeat_probability = 0.2
                         else:
-                            repeat_probability = 1.0
+                            repeat_probability = 0.3
                         
                         logger.info(f"[复读机] 达到复读条件，连续次数: {tracker['count']}, 复读概率: {repeat_probability*100}%")
                         
