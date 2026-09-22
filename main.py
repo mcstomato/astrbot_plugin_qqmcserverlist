@@ -7,6 +7,7 @@ import tempfile
 import base64
 import requests
 import json
+import re
 from functools import wraps
 import mcrcon
 import random
@@ -50,6 +51,13 @@ def save_base64_to_temp(logo_data):
         
         return temp_file_path
     return None
+
+
+def strip_mc_color_codes(text: str) -> str:
+    """去除 Minecraft 颜色/格式代码（§ + 字符）"""
+    if not text:
+        return text
+    return re.sub(r'§.', '', text)
 
 
 def require_permission(command_name: str):
@@ -296,6 +304,7 @@ class MyPlugin(Star):
                 logger.info(f"发送命令: {command}")
                 response = mcr.command(command)
                 logger.info(f"RCON 响应: {response}")
+                response = strip_mc_color_codes(response)
                 
                 if response:
                     yield event.plain_result(f"命令执行结果：\n{response}")
@@ -358,6 +367,7 @@ class MyPlugin(Star):
                 logger.info(f"发送命令: {rcon_command}")
                 response = mcr.command(rcon_command)
                 logger.info(f"RCON 响应: {response}")
+                response = strip_mc_color_codes(response)
                 
                 if response:
                     yield event.plain_result(f"{response}")
@@ -388,6 +398,7 @@ class MyPlugin(Star):
                 logger.info(f"发送命令: list players")
                 response = mcr.command("list")
                 logger.info(f"RCON 响应: {response}")
+                response = strip_mc_color_codes(response)
                 
                 if response:
                     # 解析响应格式："There are X of a max of Y players online: player1, player2"
