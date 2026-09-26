@@ -60,6 +60,29 @@ def strip_mc_color_codes(text: str) -> str:
     return re.sub(r'§.', '', text)
 
 
+def parse_player_names(list_response: str) -> list:
+    """从 list 命令响应中解析玩家名列表
+
+    兼容格式：
+    - 英文: "There are 3 of a max of 20 players online: a, b, c"
+    - 中文: "当前有 3 个玩家在线,最大在线人数为 20 个玩家." + "Builder: a, b, c"（按维度分行）
+    """
+    names = []
+    text = strip_mc_color_codes(list_response)
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or ":" not in line:
+            continue
+        # 取冒号后的玩家名部分（中文汇总行无冒号，会被跳过）
+        players_part = line.split(":", 1)[1]
+        for name in players_part.split(","):
+            name = name.strip()
+            if name and name not in names:
+                names.append(name)
+                print(names)
+    return names
+
+
 def require_permission(command_name: str):
     """
     权限检查装饰器
@@ -590,9 +613,21 @@ class MyPlugin(Star):
         if message_content:
             try:
                 with mcrcon.MCRcon(rcon_address, rcon_password, rcon_port) as mcr:
-                    logger.info(f"发送命令: {chat}")
-                    logger.info(mcr.command(chat))
-                        
+                    # 先获取在线玩家列表（@a 选择器不可用，改为逐人发送）
+                    list_response = mcr.command("list")
+                    player_names = parse_player_names(list_response)
+                    logger.info(f"在线玩家列表: {player_names}")
+
+                    if not player_names:
+                        logger.info("服务器无在线玩家，跳过群组消息同步")
+                    else:
+                        # 提取 tellraw 的 JSON 部分，逐玩家替换目标选择器发送
+                        chat_json = chat[len("tellraw @a "):]
+                        for player_name in player_names:
+                            player_chat = f"tellraw {player_name} {chat_json}"
+                            logger.info(f"发送命令: {player_chat}")
+                            logger.info(mcr.command(player_chat))
+
             except Exception as e:
                 logger.error(f"RCON 执行失败: {e}", exc_info=True)
 
