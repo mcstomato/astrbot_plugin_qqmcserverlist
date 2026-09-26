@@ -22,5 +22,11 @@
     "type": "string",
     "hint": "多个群聊ID用逗号隔开，如：123456789,987654321",
     "default": ""
+  },
+  "blocked_players": {
+    "description": "关闭群组消息的玩家ID",
+    "type": "string",
+    "hint": "通过 /group [玩家ID] F 自动添加，多个玩家ID用逗号隔开",
+    "default": ""
   }
 }

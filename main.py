@@ -137,6 +137,12 @@ class MyPlugin(Star):
         if allowed_groups_str:
             self.allowed_groups = set(group.strip() for group in allowed_groups_str.split(",") if group.strip())
         logger.info(f"群聊白名单已加载: {self.allowed_groups}")
+        # 解析关闭群组消息的玩家ID
+        blocked_players_str = self.config.get("blocked_players", "")
+        self.blocked_players = set()
+        if blocked_players_str:
+            self.blocked_players = set(p.strip() for p in blocked_players_str.split(",") if p.strip())
+        logger.info(f"关闭群组消息的玩家已加载: {self.blocked_players}")
 
     @filter.command("info",alias={'信息'})
     @require_permission("info")
@@ -496,7 +502,19 @@ class MyPlugin(Star):
         
         # 保存到变量
         self.group_settings[player_id] = group_value
-        
+
+        # 同步到插件配置：F(关闭) 添加到屏蔽列表，T(开启) 从屏蔽列表移除
+        if group_value == 0:
+            self.blocked_players.add(player_id)
+        else:
+            self.blocked_players.discard(player_id)
+        self.config["blocked_players"] = ",".join(sorted(self.blocked_players))
+        try:
+            self.config.save_config()
+            logger.info(f"已保存 blocked_players 到插件配置: {self.config['blocked_players']}")
+        except Exception as e:
+            logger.error(f"保存插件配置失败: {e}", exc_info=True)
+
         logger.info(f"已保存玩家 {player_id} 的群组消息设置为: {group_value}")
         yield event.plain_result(f"已设置玩家 {player_id} 的群组消息可视选项为: {'开启' if group_value == 1 else '关闭'}")
 
