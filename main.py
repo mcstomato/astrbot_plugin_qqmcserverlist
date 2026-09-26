@@ -78,8 +78,11 @@ def parse_player_names(list_response: str, blocked_players=None) -> list:
         players_part = line.split(":", 1)[1]
         for name in players_part.split(","):
             name = name.strip()
+            # 去掉挂机玩家的 [离开] 前缀标记
+            name = re.sub(r'^\[离开\]\s*', '', name)
             if name and name not in names and name not in blocked:
                 names.append(name)
+                print(names)
     return names
 
 
