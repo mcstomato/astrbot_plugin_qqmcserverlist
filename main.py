@@ -60,7 +60,7 @@ def strip_mc_color_codes(text: str) -> str:
     return re.sub(r'§.', '', text)
 
 
-def parse_player_names(list_response: str) -> list:
+def parse_player_names(list_response: str, blocked_players=None) -> list:
     """从 list 命令响应中解析玩家名列表
 
     兼容格式：
@@ -68,6 +68,7 @@ def parse_player_names(list_response: str) -> list:
     - 中文: "当前有 3 个玩家在线,最大在线人数为 20 个玩家." + "Builder: a, b, c"（按维度分行）
     """
     names = []
+    blocked = blocked_players or set()
     text = strip_mc_color_codes(list_response)
     for line in text.splitlines():
         line = line.strip()
@@ -77,9 +78,8 @@ def parse_player_names(list_response: str) -> list:
         players_part = line.split(":", 1)[1]
         for name in players_part.split(","):
             name = name.strip()
-            if name and name not in names:
+            if name and name not in names and name not in blocked:
                 names.append(name)
-                print(names)
     return names
 
 
@@ -633,7 +633,7 @@ class MyPlugin(Star):
                 with mcrcon.MCRcon(rcon_address, rcon_password, rcon_port) as mcr:
                     # 先获取在线玩家列表（@a 选择器不可用，改为逐人发送）
                     list_response = mcr.command("list")
-                    player_names = parse_player_names(list_response)
+                    player_names = parse_player_names(list_response, self.blocked_players)
                     logger.info(f"在线玩家列表: {player_names}")
 
                     if not player_names:
